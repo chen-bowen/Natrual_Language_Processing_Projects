@@ -1,0 +1,94 @@
+import pandas as pd
+import numpy as np
+import requests
+import re
+
+
+class LanguageModel:
+    """Build a language model using Moby Dick text corpus"""
+
+    def __init__(self):
+        self.load_data()
+        self.__initialize_bigram_transition_probabilities()
+        self.__initialize_unigram_distributions()
+
+    def load_data(self):
+        """Load the text data as the corpus"""
+        url = "https://lazyprogrammer.me/course_files/moby_dick.txt"
+        response = requests.get(url)
+        self.corpus = response.content.decode("utf-8")
+
+    def __initialize_bigram_transition_probabilities(self):
+        """ 
+            Transition probabilities, represents the probability of going from 1 character to another.
+            Initialize it to all 1s with a 26 x 26 matrix - since there are 26 letters in English
+        """
+        self.M = np.ones((26, 26))
+
+    def __initialize_unigram_distributions(self):
+        """ 
+            Probability distributions for the initial letters 
+            Initialize it to an array of 26 - since there are 26 letters in English
+        """
+        self.pi = np.zeros(26)
+
+    def __update_transition_probability(self, char1, char2):
+        """ Add 1 to the bigram transition probability matrix if we see a pattern from char1 to char2 """
+        i = ord(char1) - 97  # row index represents starting character
+        j = ord(char2) - 97  # column index represents ending character
+        self.M[i, j] += 1
+
+    def __update_unigram_distribution(self, char):
+        try:
+            i = ord(char) - 97
+            self.pi[i] += 1
+        except:
+            import pdb
+
+            pdb.set_trace()
+
+    def get_log_word_probability(self, word):
+        """get the word log probability"""
+        # take the first letter of the word to get the unigram probability
+        log_unigram_prob = np.log(self.__update_unigram_distribution(word[0]))
+
+        # get all the bigram probabilties for the rest of the characters
+        log_bigram_prob = sum(
+            [
+                np.log(self.__update_transition_probability(word[i], word[i + 1]))
+                for i in range(len(word[1:-1]))
+            ]
+        )
+
+        return log_unigram_prob + log_bigram_prob
+
+    def get_sentence_log_probability(self, sentence):
+        """get the sentence log probability"""
+        # split the sentence into tokens
+        tokens = sentence.split()
+        # get the probability of a sentence
+        log_sentence_prob = sum(
+            [self.get_log_word_probability(token) for token in tokens]
+        )
+        return log_sentence_prob
+
+    def build(self):
+        """Build the language model for English Language, i.e the likelihood of letter combinations"""
+        # remove non-alphanumeric chars
+        self.corpus = re.sub("[^a-zA-Z]", " ", self.corpus)
+
+        # split into lower case tokens
+        tokens = self.corpus.lower().split()
+
+        # update the bigram transition probability and unigram probability
+        for token in tokens:
+
+            # update unigram probabilty
+            self.__update_unigram_distribution(token[0])
+
+            # update bigram probability
+            for i in range(len(token[1:-1])):
+                self.__update_transition_probability(token[i], token[i + 1])
+
+        self.M = self.M / self.M.sum(axis=1, keepdims=True)
+        self.pi = self.pi / self.pi.sum()
