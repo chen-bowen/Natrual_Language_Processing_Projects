@@ -32,35 +32,36 @@ class LanguageModel:
         """
         self.pi = np.zeros(26)
 
+    @staticmethod
+    def letter_to_index(letter):
+        """Use the binary conversion technique to convert alphabetical letters to int index"""
+        return ord(letter) - 97
+
     def __update_transition_probability(self, char1, char2):
         """ Add 1 to the bigram transition probability matrix if we see a pattern from char1 to char2 """
-        i = ord(char1) - 97  # row index represents starting character
-        j = ord(char2) - 97  # column index represents ending character
+        i = self.letter_to_index(char1)  # row index represents starting character
+        j = self.letter_to_index(char1)  # column index represents ending character
         self.M[i, j] += 1
 
     def __update_unigram_distribution(self, char):
-        try:
-            i = ord(char) - 97
-            self.pi[i] += 1
-        except:
-            import pdb
-
-            pdb.set_trace()
+        i = self.letter_to_index(char)
+        self.pi[i] += 1
 
     def get_log_word_probability(self, word):
         """get the word log probability"""
         # take the first letter of the word to get the unigram probability
-        log_unigram_prob = np.log(self.__update_unigram_distribution(word[0]))
+        first_letter_index = self.letter_to_index(word[0])
+        log_unigram_prob = np.log(self.pi[first_letter_index])
 
         # get all the bigram probabilties for the rest of the characters
-        log_bigram_prob = sum(
-            [
-                np.log(self.__update_transition_probability(word[i], word[i + 1]))
-                for i in range(len(word[1:-1]))
-            ]
-        )
+        log_bigram_prob = 0
 
-        return log_unigram_prob + log_bigram_prob
+        for i in range(len(word[1:-1])):
+            starting_letter_index = self.letter_to_index(word[i])
+            ending_letter_index = self.letter_to_index(word[i + 1])
+            log_bigram_prob += np.log(self.M[starting_letter_index][ending_letter_index])
+
+        return -(log_unigram_prob + log_bigram_prob)
 
     def get_sentence_log_probability(self, sentence):
         """get the sentence log probability"""
@@ -91,4 +92,6 @@ class LanguageModel:
                 self.__update_transition_probability(token[i], token[i + 1])
 
         self.M = self.M / self.M.sum(axis=1, keepdims=True)
+        print("Bigram transistion probabilities M updated.")
         self.pi = self.pi / self.pi.sum()
+        print("Unigram probabilities pi updated.")
