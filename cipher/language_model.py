@@ -8,11 +8,9 @@ class LanguageModel:
     """Build a language model using Moby Dick text corpus"""
 
     def __init__(self):
-        self.load_data()
-        self.__initialize_bigram_transition_probabilities()
-        self.__initialize_unigram_distributions()
+        self.build()
 
-    def load_data(self):
+    def __load_data(self):
         """Load the text data as the corpus"""
         url = "https://lazyprogrammer.me/course_files/moby_dick.txt"
         response = requests.get(url)
@@ -47,34 +45,11 @@ class LanguageModel:
         i = self.letter_to_index(char)
         self.pi[i] += 1
 
-    def get_log_word_probability(self, word):
-        """get the word log probability"""
-        # take the first letter of the word to get the unigram probability
-        first_letter_index = self.letter_to_index(word[0])
-        log_unigram_prob = np.log(self.pi[first_letter_index])
-
-        # get all the bigram probabilties for the rest of the characters
-        log_bigram_prob = 0
-
-        for i in range(len(word[1:-1])):
-            starting_letter_index = self.letter_to_index(word[i])
-            ending_letter_index = self.letter_to_index(word[i + 1])
-            log_bigram_prob += np.log(self.M[starting_letter_index][ending_letter_index])
-
-        return -(log_unigram_prob + log_bigram_prob)
-
-    def get_sentence_log_probability(self, sentence):
-        """get the sentence log probability"""
-        # split the sentence into tokens
-        tokens = sentence.split()
-        # get the probability of a sentence
-        log_sentence_prob = sum(
-            [self.get_log_word_probability(token) for token in tokens]
-        )
-        return log_sentence_prob
-
     def build(self):
         """Build the language model for English Language, i.e the likelihood of letter combinations"""
+        self.__load_data()
+        self.__initialize_bigram_transition_probabilities()
+        self.__initialize_unigram_distributions()
         # remove non-alphanumeric chars
         self.corpus = re.sub("[^a-zA-Z]", " ", self.corpus)
 
@@ -92,6 +67,30 @@ class LanguageModel:
                 self.__update_transition_probability(token[i], token[i + 1])
 
         self.M = self.M / self.M.sum(axis=1, keepdims=True)
-        print("Bigram transistion probabilities M updated.")
         self.pi = self.pi / self.pi.sum()
-        print("Unigram probabilities pi updated.")
+
+    def get_log_word_probability(self, word):
+        """get the word log probability"""
+        # take the first letter of the word to get the unigram probability
+        first_letter_index = self.letter_to_index(word[0])
+        log_unigram_prob = np.log(self.pi[first_letter_index])
+
+        # get all the bigram probabilties for the rest of the characters
+        log_bigram_prob = 0
+
+        for i in range(len(word[1:-1])):
+            starting_letter_index = self.letter_to_index(word[i])
+            ending_letter_index = self.letter_to_index(word[i + 1])
+            log_bigram_prob += np.log(self.M[starting_letter_index][ending_letter_index])
+
+        return np.exp(log_unigram_prob + log_bigram_prob)
+
+    def get_sentence_log_probability(self, sentence):
+        """get the sentence log probability"""
+        # split the sentence into tokens
+        tokens = sentence.split()
+        # get the probability of a sentence
+        log_sentence_prob = sum(
+            [self.get_log_word_probability(token) for token in tokens]
+        )
+        return log_sentence_prob
