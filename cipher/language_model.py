@@ -66,14 +66,14 @@ class LanguageModel:
             for i in range(len(token[1:-1])):
                 self.__update_transition_probability(token[i], token[i + 1])
 
-        self.M = self.M / self.M.sum(axis=1, keepdims=True)
-        self.pi = self.pi / self.pi.sum()
+        self.log_M = np.log(self.M / self.M.sum(axis=1, keepdims=True))
+        self.log_pi = np.log(self.pi / self.pi.sum())
 
     def get_log_word_probability(self, word):
         """get the word log probability"""
         # take the first letter of the word to get the unigram probability
         first_letter_index = self.letter_to_index(word[0])
-        log_unigram_prob = np.log(self.pi[first_letter_index])
+        log_unigram_prob = self.log_pi[first_letter_index]
 
         # get all the bigram probabilties for the rest of the characters
         log_bigram_prob = 0
@@ -81,9 +81,9 @@ class LanguageModel:
         for i in range(len(word[1:-1])):
             starting_letter_index = self.letter_to_index(word[i])
             ending_letter_index = self.letter_to_index(word[i + 1])
-            log_bigram_prob += np.log(self.M[starting_letter_index][ending_letter_index])
+            log_bigram_prob += self.log_M[starting_letter_index][ending_letter_index]
 
-        return np.exp(log_unigram_prob + log_bigram_prob)
+        return log_unigram_prob + log_bigram_prob
 
     def get_sentence_log_probability(self, sentence):
         """get the sentence log probability"""
