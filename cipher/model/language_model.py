@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 import requests
 import re
+import os
 
 
 class LanguageModel:
@@ -12,6 +13,11 @@ class LanguageModel:
 
     def __load_data(self):
         """Load the text data as the corpus"""
+        _init_file_dir = os.path.dirname(__file__)
+        if os.path.exists(os.path.join(_init_file_dir, "data/moby_dick.txt")):
+            with open(os.path.join(_init_file_dir, "data/moby_dick.txt"), "r") as file:
+                self.corpus = file.read()
+
         url = "https://lazyprogrammer.me/course_files/moby_dick.txt"
         response = requests.get(url)
         self.corpus = response.content.decode("utf-8")
@@ -21,6 +27,7 @@ class LanguageModel:
             Transition probabilities, represents the probability of going from 1 character to another.
             Initialize it to all 1s with a 26 x 26 matrix - since there are 26 letters in English
         """
+        # initialize to a matrix with all 1s to handle add one smoothing
         self.M = np.ones((26, 26))
 
     def __initialize_unigram_distributions(self):
@@ -73,7 +80,9 @@ class LanguageModel:
         """get the word log probability"""
         # take the first letter of the word to get the unigram probability
         first_letter_index = self.letter_to_index(word[0])
-        log_unigram_prob = self.log_pi[first_letter_index]
+        log_unigram_prob = (
+            self.log_pi[first_letter_index] if first_letter_index in np.arange(26) else 0
+        )
 
         # get all the bigram probabilties for the rest of the characters
         log_bigram_prob = 0
@@ -81,7 +90,13 @@ class LanguageModel:
         for i in range(len(word[1:-1])):
             starting_letter_index = self.letter_to_index(word[i])
             ending_letter_index = self.letter_to_index(word[i + 1])
-            log_bigram_prob += self.log_M[starting_letter_index][ending_letter_index]
+
+            log_bigram_prob += (
+                self.log_M[starting_letter_index][ending_letter_index]
+                if (starting_letter_index in np.arange(26))
+                and (ending_letter_index in np.arange(26))
+                else 0
+            )
 
         return log_unigram_prob + log_bigram_prob
 

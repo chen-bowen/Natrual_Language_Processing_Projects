@@ -1,9 +1,10 @@
 import string
 import random
 import numpy as np
+import re
 
 
-class Cipher:
+class Encoder:
     def __init__(self):
         self.__build_cipher_mapping()
 
@@ -22,8 +23,9 @@ class Cipher:
             letters_shuffled[i]: letters_original[i] for i in range(len(letters_original))
         }
 
-    def encode_message(self, message):
+    def encode(self, message):
         """ method to encode the message using the cipher mapping """
+        message = re.sub("[^a-zA-Z]", " ", message)
         message_tokens = list(message.lower())
         for i in range(len(message)):
             if message_tokens[i] in self.encoder_cipher_mapping:
@@ -31,11 +33,11 @@ class Cipher:
         encoded_message = "".join(message_tokens)
         return encoded_message
 
-    def decode_message(self, encoded_message):
+    def decode(self, encoded_message, mapping):
         """ method to decode the message using the cipher mapping """
         message_tokens = list(encoded_message.lower())
         for i in range(len(encoded_message)):
-            if message_tokens[i] in self.decoder_cipher_mapping:
-                message_tokens[i] = self.decoder_cipher_mapping[message_tokens[i]]
+            if message_tokens[i] in mapping:
+                message_tokens[i] = mapping[message_tokens[i]]
         decoded_message = "".join(message_tokens)
         return decoded_message
