@@ -19,10 +19,6 @@ class Encoder:
             letters_original[i]: letters_shuffled[i] for i in range(len(letters_original))
         }
 
-        self.decoder_cipher_mapping = {
-            letters_shuffled[i]: letters_original[i] for i in range(len(letters_original))
-        }
-
     def encode(self, message):
         """ method to encode the message using the cipher mapping """
         message = re.sub("[^a-zA-Z]", " ", message)

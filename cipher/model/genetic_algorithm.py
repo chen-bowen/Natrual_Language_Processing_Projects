@@ -62,7 +62,8 @@ class GeneticAlgorithm:
     def train(self, initial_message):
         """ Train the Genetic Algorithm by the real data from inital_message """
         # initialize vars
-        self.total_scores_curr_gen = np.zeros(self.NUM_ITER)
+        self.avg_scores_per_iter = np.zeros(self.NUM_ITER)
+        self.best_scores_per_iter = np.zeros(self.NUM_ITER)
         self.best_dna = None
         self.best_mapping = None
         self.best_score = float("-inf")
@@ -97,7 +98,8 @@ class GeneticAlgorithm:
                     self.best_dna = dna
 
             # get the current generation average scores
-            self.total_scores_curr_gen[i] = np.mean(list(dna_scores.values()))
+            self.avg_scores_per_iter[i] = np.mean(list(dna_scores.values()))
+            self.best_scores_per_iter[i] = self.best_score
 
             # choose the top 5 best performing dna sequece to pass on to the next generation
             sorted_dna_curr_gen = sorted(
@@ -108,8 +110,8 @@ class GeneticAlgorithm:
             if i in np.arange(0, 251, 50):
                 print(
                     "\n iter: {},".format(i),
-                    "log loss: {},".format(self.total_scores_curr_gen[i]),
-                    "best log loss so far: {}".format(self.best_score),
+                    "log likelihood: {},".format(self.avg_scores_per_iter[i]),
+                    "best likelihood so far: {}".format(self.best_score),
                     "\n decoded_message: \n {} \n".format(
                         self.encoder.decode(encoded_message, self.best_mapping)
                     ),
