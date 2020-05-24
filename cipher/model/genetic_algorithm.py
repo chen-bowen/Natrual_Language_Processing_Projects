@@ -1,15 +1,16 @@
 import numpy as np
 import random
 import string
-from cipher.language_model import LanguageModel
-from cipher.encoder import Encoder
+from model.language_model import LanguageModel
+from model.encoder import Encoder
+from copy import copy
 
 
 class GeneticAlgorithm:
 
     POOL_SIZE = 20
     OFFSPRING_POOL_SIZE = 5
-    NUM_ITER = 200
+    NUM_ITER = 250
 
     def __init__(self):
         self.__initialize_dna_pool()
@@ -41,7 +42,8 @@ class GeneticAlgorithm:
         # generate random positions
         index_1, index_2 = random.sample(list(np.arange(len(sequence))), 2)
         # swap positions
-        seq_list = list(sequence)
+        sequence_copy = copy(sequence)
+        seq_list = list(sequence_copy)
         seq_list[index_1], seq_list[index_2] = seq_list[index_2], seq_list[index_1]
         return "".join(seq_list)
 
@@ -60,7 +62,7 @@ class GeneticAlgorithm:
     def train(self, initial_message):
         """ Train the Genetic Algorithm by the real data from inital_message """
         # initialize vars
-        total_scores_curr_gen = np.zeros(self.NUM_ITER)
+        self.total_scores_curr_gen = np.zeros(self.NUM_ITER)
         self.best_dna = None
         self.best_mapping = None
         self.best_score = float("-inf")
@@ -79,7 +81,7 @@ class GeneticAlgorithm:
             for dna in self.dna_pool:
                 # get current mapping from current dna
                 curr_mapping = {
-                    encoded_letter: original_letter
+                    original_letter: encoded_letter
                     for original_letter, encoded_letter in zip(self.all_letters, dna)
                 }
                 # decode using current mapping and get the score
@@ -95,7 +97,7 @@ class GeneticAlgorithm:
                     self.best_dna = dna
 
             # get the current generation average scores
-            total_scores_curr_gen[i] = np.mean(list(dna_scores.values()))
+            self.total_scores_curr_gen[i] = np.mean(list(dna_scores.values()))
 
             # choose the top 5 best performing dna sequece to pass on to the next generation
             sorted_dna_curr_gen = sorted(
@@ -103,9 +105,12 @@ class GeneticAlgorithm:
             )
             self.dna_pool = [sequence[0] for sequence in sorted_dna_curr_gen[:5]]
 
-            if i % 20 == 0:
+            if i in np.arange(0, 251, 50):
                 print(
-                    "iter: {},".format(i),
-                    "score: {},".format(total_scores_curr_gen[i]),
-                    "best so far: {}".format(self.best_score),
+                    "\n iter: {},".format(i),
+                    "log loss: {},".format(self.total_scores_curr_gen[i]),
+                    "best log loss so far: {}".format(self.best_score),
+                    "\n decoded_message: \n {} \n".format(
+                        self.encoder.decode(encoded_message, self.best_mapping)
+                    ),
                 )

@@ -45,7 +45,7 @@ class LanguageModel:
     def __update_transition_probability(self, char1, char2):
         """ Add 1 to the bigram transition probability matrix if we see a pattern from char1 to char2 """
         i = self.letter_to_index(char1)  # row index represents starting character
-        j = self.letter_to_index(char1)  # column index represents ending character
+        j = self.letter_to_index(char2)  # column index represents ending character
         self.M[i, j] += 1
 
     def __update_unigram_distribution(self, char):
@@ -70,7 +70,7 @@ class LanguageModel:
             self.__update_unigram_distribution(token[0])
 
             # update bigram probability
-            for i in range(len(token[1:-1])):
+            for i in range(len(token) - 1):
                 self.__update_transition_probability(token[i], token[i + 1])
 
         self.log_M = np.log(self.M / self.M.sum(axis=1, keepdims=True))
@@ -87,7 +87,7 @@ class LanguageModel:
         # get all the bigram probabilties for the rest of the characters
         log_bigram_prob = 0
 
-        for i in range(len(word[1:-1])):
+        for i in range(len(word) - 1):
             starting_letter_index = self.letter_to_index(word[i])
             ending_letter_index = self.letter_to_index(word[i + 1])
 
