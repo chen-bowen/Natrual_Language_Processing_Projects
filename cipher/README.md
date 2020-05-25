@@ -33,3 +33,30 @@ encoder = Encoder()
 encoded_message = encoder.encode(original_message)
 
 ```
+
+### Genetic Algorithm
+
+The genetic algorithm is based on the principle of natrual selection of random mutations of the decryption mapping. Based on the likelihood returned by the language model after encryption, we will keep pieces of the "higher likelihood score" maps and change the "lower likelihood score" maps. By maximizing this likelihood score, the encryption map will eventually be really close to the real map. To use the `GeneticAlgorithm` class is really simple, we can just call the `train` method with the original message.
+
+```python
+
+from model.genetic_algorithm import GeneticAlgorithm
+
+g = GeneticAlgorithm()
+g.train(original_message)
+
+```
+
+Use the trained genetic algorithm class, we can get the estimated encryption mapping using the `best_mapping` attribute of the class. Then we can use that map to decrypt the encoded message.
+
+
+```python
+
+best_mapping = g.best_mapping
+
+encoder = Encoder()
+encoded_message = encoder.encode(original_message)
+decoded_message = encoder.decode(encoded_message, best_mapping)
+```
+
+
