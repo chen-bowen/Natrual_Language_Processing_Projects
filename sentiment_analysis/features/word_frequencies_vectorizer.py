@@ -5,7 +5,7 @@ import numpy as np
 
 
 class WordFrequencyVectorizer(BaseEstimator):
-    """ Generate features in word frequency vectors """
+    """ Generate features in word frequency vectors, used for pipeline """
 
     def __init__(
         self,
@@ -40,7 +40,7 @@ class WordFrequencyVectorizer(BaseEstimator):
     def fit(self, X, y=None):
         return self
 
-    def word_frequency_matrix(self, X, y=None):
+    def transform(self, X, y=None):
         """ Get the word frequency vectors for all tokenized reviews """
         word_frequency_vectors = list(
             map(
