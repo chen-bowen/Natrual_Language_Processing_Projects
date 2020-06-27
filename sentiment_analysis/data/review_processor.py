@@ -1,8 +1,6 @@
 import pandas as pd
 import numpy as np
-import nltk
-from nltk.corpus import stopwords
-from nltk.stem import WordNetLemmatizer
+from sentiment_analysis.utils.word_tokenizer import WordTokenizer
 from bs4 import BeautifulSoup
 import os
 from collections import defaultdict, Counter
@@ -41,7 +39,14 @@ class ReviewProcessor:
                 self.reviews[review_type][cat] = [
                     review.text for review in reviews_raw.find_all("review_text")
                 ]
+                # random shuffle and cut off 5% of the reviews - some of the words will be unseen
+                # which closely mimic the real life situation
                 np.random.shuffle(self.reviews[review_type][cat])
+                num_reviews = len(self.reviews[review_type][cat])
+                self.reviews[review_type][cat] = self.reviews[review_type][cat][
+                    : int(num_reviews * 0.95)
+                ]
+
             # merge all categories into one if option is set to "all"
             if self.option == "all":
                 self.reviews[review_type] = list(
@@ -53,38 +58,24 @@ class ReviewProcessor:
         with open(cached_path, "w") as fp:
             json.dump(self.reviews, fp)
 
-    @staticmethod
-    def custom_tokenizer(s):
-        """ build customer tokenizer by lower case, lemmatize and remove stopwords """
-        wordnet_lemmatizer = WordNetLemmatizer()
-        # lower case
-        s = s.lower()
-        # split string into words (tokens)
-        tokens = nltk.tokenize.word_tokenize(s)
-        # remove short words, they're probably not useful
-        tokens = [t for t in tokens if len(t) > 2]
-        # put words into base form
-        tokens = [wordnet_lemmatizer.lemmatize(t) for t in tokens]
-        # remove stopwords
-        tokens = [t for t in tokens if t not in stopwords.words("english")]
-        return tokens
-
-    def __tokenize_reviews(self, cached_path):
+    def __tokenize_all_reviews(self,):
         """" Tokenize all reviews, preprocess the reviews using custom tokenizer """
         self.reviews_tokenized = defaultdict(dict)
+        tokenizer = WordTokenizer()
         for review_type in ["positive", "negative"]:
             if self.option != "all":
                 for cat in self.categories:
                     self.reviews_tokenized[review_type][cat] = [
-                        self.custom_tokenizer(i) for i in self.reviews[review_type][cat]
+                        tokenizer.tokenize_sentence(i)
+                        for i in self.reviews[review_type][cat]
                     ]
             else:
                 self.reviews_tokenized[review_type] = [
-                    self.custom_tokenizer(i) for i in self.reviews[review_type]
+                    tokenizer.tokenize_sentence(i) for i in self.reviews[review_type]
                 ]
 
         # save tokenized reviews to cache to speedup build process
-        with open(cached_path, "w") as fp:
+        with open(self.cached_path, "w") as fp:
             json.dump(self.reviews_tokenized, fp)
 
     def build(self):
@@ -128,3 +119,6 @@ class ReviewProcessor:
 
         self.word_to_index_map = {word: i for i, word in enumerate(all_unique_words)}
         self.vocab_size = len(self.word_to_index_map)
+
+        # add a special token to represent unknown word
+        self.word_to_index_map["unknown_word"] = self.vocab_size + 1

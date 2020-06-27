@@ -1,5 +1,6 @@
 from sklearn.base import BaseEstimator
 from sentiment_analysis.data.review_processor import ReviewProcessor
+from sentiment_analysis.utils.word_tokenizer import WordTokenizer
 import pandas as pd
 import numpy as np
 
@@ -12,7 +13,8 @@ class WordFrequencyVectorizer(BaseEstimator):
         categories=["electronics", "dvd", "kitchen_&_housewares", "books"],
         option="all",
     ):
-        pass
+        self.tokenizer = WordTokenizer()
+        self.set_word_index_mapping()
 
     def set_word_index_mapping(self):
         processed_review = ReviewProcessor(self.categories, self.option)
@@ -20,18 +22,24 @@ class WordFrequencyVectorizer(BaseEstimator):
         self.vocab_size = processed_review.vocab_size
 
     @staticmethod
-    def get_word_frequency_vector(tokenized_review, word_to_index_map):
+    def get_word_frequency_vector(review_text, word_to_index_map):
         """ Get the word frequency vector for one tokenized review"""
+        # get the tokenized review from the review text
+        tokenized_review = self.tokenizer.tokenize_sentence(review_text)
+
         # get count for all words appeared in the tokenized review
         word_frequency_count = Counter(tokenized_review)
 
         # map all the words to indices using the word to index map
         word_frequency_count_ind = {
-            word_to_index_map[word]: count for word, count in word_frequency_count.items()
+            word_to_index_map[
+                word if word in list(word_to_index_map.keys()) else "unknown_word"
+            ]: count
+            for word, count in word_frequency_count.items()
         }
 
-        # flatten to a vector that equals to the vocabulary size
-        word_frequency_vector = np.zeros(len(word_to_index_map))
+        # flatten to a vector that equals to the vocabulary size + 1 (last index for unknown word)
+        word_frequency_vector = np.zeros(len(word_to_index_map) + 1)
         for ind, count in word_frequency_count_ind.items():
             word_frequency_vector[ind] += count
 
