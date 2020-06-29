@@ -1,6 +1,6 @@
 __pycache__
 .DS_Store*
 .ipynb_checkpoints
-sentiment_analysis/data/reviews
-sentiment_analysis/data/cache/*
+sentiment_analysis/sentiment_analysis/data/reviews
+sentiment_analysis/sentiment_analysis/data/cache/*
 .vscode
