@@ -1,11 +1,10 @@
 import pandas as pd
 import numpy as np
 from sentiment_analysis.utils.word_tokenizer import WordTokenizer
-from bs4 import BeautifulSoup
-import os
+from sentiment_analysis.utils.load_reviews import LoadReviews
 from collections import defaultdict, Counter
+import os
 from itertools import chain
-from functools import partial
 import json
 
 
@@ -22,43 +21,7 @@ class ReviewProcessor:
         self._init_file_dir = os.path.dirname(__file__)
         self.build()
 
-    def __load_reviews(self, cached_path):
-        """ Load all reviews from the data folder """
-
-        self.reviews = defaultdict(dict)
-        np.random.seed(7)
-        # populate reviews dict
-        for review_type in ["positive", "negative"]:
-            for cat in self.categories:
-                file_path = os.path.join(
-                    self._init_file_dir, "reviews/{}/{}.review".format(cat, review_type)
-                )
-                reviews_raw = BeautifulSoup(
-                    open(file_path).read(), features="html.parser"
-                )
-                self.reviews[review_type][cat] = [
-                    review.text for review in reviews_raw.find_all("review_text")
-                ]
-                # random shuffle and cut off 5% of the reviews - some of the words will be unseen
-                # which closely mimic the real life situation
-                np.random.shuffle(self.reviews[review_type][cat])
-                num_reviews = len(self.reviews[review_type][cat])
-                self.reviews[review_type][cat] = self.reviews[review_type][cat][
-                    : int(num_reviews * 0.95)
-                ]
-
-            # merge all categories into one if option is set to "all"
-            if self.option == "all":
-                self.reviews[review_type] = list(
-                    chain(*list(self.reviews[review_type].values()))
-                )
-                np.random.shuffle(self.reviews[review_type])
-
-        # save tokenized reviews to cache to speedup build process
-        with open(cached_path, "w") as fp:
-            json.dump(self.reviews, fp)
-
-    def __tokenize_all_reviews(self,):
+    def __tokenize_all_reviews(self):
         """" Tokenize all reviews, preprocess the reviews using custom tokenizer """
         self.reviews_tokenized = defaultdict(dict)
         tokenizer = WordTokenizer()
@@ -90,7 +53,7 @@ class ReviewProcessor:
 
         else:
             print("Loading reviews ...")
-            self.__load_reviews(cached_path_reviews)
+            self.reviews = LoadReviews(cached_path_reviews).reviews
             print("Completed")
             print("-----------------")
 

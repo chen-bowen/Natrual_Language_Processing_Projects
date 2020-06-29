@@ -22,4 +22,3 @@ class WordTokenizer:
         # remove stopwords
         tokens = [t for t in tokens if t not in stopwords.words("english")]
         return tokens
-
