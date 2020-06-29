@@ -1,4 +1,5 @@
-from sentiment_analysis.utils.load_reviews import LoadReviews
+from sentiment_analysis.data.load_reviews import LoadReviews
+import numpy as np
 
 
 class TrainTestSplit:

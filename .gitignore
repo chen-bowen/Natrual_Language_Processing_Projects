@@ -3,4 +3,5 @@ __pycache__
 .ipynb_checkpoints
 sentiment_analysis/sentiment_analysis/data/reviews
 sentiment_analysis/sentiment_analysis/data/cache/*
+sentiment_analysis/notebooks/.ipynb_checkpoints
 .vscode

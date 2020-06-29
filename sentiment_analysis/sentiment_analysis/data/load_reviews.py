@@ -1,13 +1,23 @@
 from bs4 import BeautifulSoup
 from collections import defaultdict
 import os
+import numpy as np
+from itertools import chain
+import json
 
 
 class LoadReviews:
     """ Utility class to load reviews """
 
-    def __init__(self, cached_path):
+    def __init__(
+        self,
+        cached_path=os.path.join(os.path.dirname(__file__), "cache/reviews.json"),
+        categories=["electronics", "dvd", "kitchen_&_housewares", "books"],
+        option="all",
+    ):
         self._init_file_dir = os.path.dirname(__file__)
+        self.categories = categories
+        self.option = option
         self.cached_path = cached_path
         self.load_reviews()
 

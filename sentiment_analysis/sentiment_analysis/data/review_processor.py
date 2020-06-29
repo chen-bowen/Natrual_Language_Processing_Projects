@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 from sentiment_analysis.utils.word_tokenizer import WordTokenizer
-from sentiment_analysis.utils.load_reviews import LoadReviews
+from sentiment_analysis.data.load_reviews import LoadReviews
 from collections import defaultdict, Counter
 import os
 from itertools import chain
